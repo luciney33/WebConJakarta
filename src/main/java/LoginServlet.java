@@ -1,3 +1,4 @@
+import config.UrlConstants;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -7,7 +8,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
 
-@WebServlet("/login")
+@WebServlet(UrlConstants.URL_LOGIN)
 public class LoginServlet extends HttpServlet  {
 
     @Override
@@ -16,12 +17,22 @@ public class LoginServlet extends HttpServlet  {
 
         String action = request.getParameter("action");
 
+        if ("jugar".equals(action)) {
+            HttpSession session = request.getSession(false);
+            if (session == null || session.getAttribute("usuario") == null) {
+                response.sendRedirect(UrlConstants.PAGE_LOGIN_HTML);
+                return;
+            }
+            response.sendRedirect(UrlConstants.URL_JUEGO);
+            return;
+        }
+
         if ("logout".equals(action)) {
             HttpSession session = request.getSession(false);
             if (session != null) {
                 session.invalidate();
             }
-            response.sendRedirect("login");
+            response.sendRedirect(UrlConstants.PAGE_LOGIN_HTML);
             return;
         }
 
@@ -32,10 +43,9 @@ public class LoginServlet extends HttpServlet  {
             HttpSession session = request.getSession(true);
             session.setAttribute("usuario", usuario);
             session.setAttribute("loginTime", System.currentTimeMillis());
-
-            response.sendRedirect("login");
+            response.sendRedirect(UrlConstants.URL_JUEGO);
         } else {
-            response.sendRedirect("login?error=true");
+            response.sendRedirect(UrlConstants.PAGE_LOGIN_ERROR);
         }
     }
 }
