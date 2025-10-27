@@ -14,6 +14,9 @@ import org.thymeleaf.web.IWebExchange;
 import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet(UrlConstants.URL_FINISH)
 public class FinishServlet extends HttpServlet {
@@ -28,30 +31,38 @@ public class FinishServlet extends HttpServlet {
             return;
         }
 
-        var webExchange = JakartaServletWebApplication.buildApplication(getServletContext())
-                .buildExchange(request, response);
-        WebContext context = new WebContext(webExchange);
+        String usuario = (String) session.getAttribute("usuario");
+        int intentos = (int) session.getAttribute("intentosFinales");
+        long inicioPartida = (long) session.getAttribute("inicioPartida");
+        long tiempoJuego = System.currentTimeMillis() - inicioPartida;
 
-        context.setVariable("usuario", session.getAttribute("usuario"));
-        Integer intentos = (Integer) session.getAttribute(GameConstants.VAR_INTENTOS);
-        context.setVariable(GameConstants.VAR_INTENTOS, intentos);
+        // Obtener o crear estadística
+        LoginServlet loginServlet = (LoginServlet) getServletContext().getAttribute("loginServlet");
+        Estadistica estadistica = loginServlet.obtenerEstadistica(usuario);
 
-        Integer numeroSecreto = (Integer) session.getAttribute(GameConstants.NUMERO_SECRETO);
-        context.setVariable(MessageConstants.VAR_MENSAJE,
-                MessageConstants.MSG_GANASTE + numeroSecreto);
-
-        String mensajeMotivacional;
-        if (intentos <= 5) {
-            mensajeMotivacional = "oleeeee!! maquina";
-        } else if (intentos <= GameConstants.MAX_INTENTOS) {
-            mensajeMotivacional = "muyy bieen";
-        } else {
-            mensajeMotivacional = "Sigue practicando!!!";
+        if (estadistica == null) {
+            estadistica = new Estadistica();
+            loginServlet.crearEstadistica(usuario, estadistica);
         }
-        context.setVariable("mensajeMotivacional", mensajeMotivacional);
 
-        response.setContentType(ThymeleafConstants.CONTENT_TYPE);
-        ((TemplateEngine) getServletContext().getAttribute(ThymeleafConstants.TEMPLATE_ENGINE_ATTR))
-                .process(UrlConstants.TEMPLATE_FINISH, context, response.getWriter());
+        // Guardar partida
+        int puntuacion = 100 - (intentos * 5);
+        estadistica.agregarPartida(new Partida(puntuacion, intentos, tiempoJuego));
+
+        // Limpiar sesión
+        session.removeAttribute("inicioPartida");
+        session.removeAttribute("intentosFinales");
+
+        // Mostrar pantalla de fin
+        TemplateEngine engine = (TemplateEngine) getServletContext().getAttribute("templateEngine");
+        JakartaServletWebApplication application = JakartaServletWebApplication.buildApplication(getServletContext());
+        IWebExchange exchange = application.buildExchange(request, response);
+        WebContext context = new WebContext(exchange);
+
+        context.setVariable("intentos", intentos);
+        context.setVariable("usuario", usuario);
+        context.setVariable("puntuacion", puntuacion);
+
+        engine.process(UrlConstants.TEMPLATE_FINISH, context, response.getWriter());
     }
 }

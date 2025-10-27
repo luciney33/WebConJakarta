@@ -29,6 +29,7 @@ public class JuegoServlet extends HttpServlet {
             int numeroSecreto = new Random().nextInt(100) + 1;
             session.setAttribute("numeroSecreto", numeroSecreto);
             session.setAttribute("intentos", 0);
+            session.setAttribute("inicioPartida", System.currentTimeMillis());
         }
 
         TemplateEngine engine = (TemplateEngine) getServletContext().getAttribute("templateEngine");
@@ -58,22 +59,19 @@ public class JuegoServlet extends HttpServlet {
 
         int numeroSecreto = (int) session.getAttribute("numeroSecreto");
         int intentos = (int) session.getAttribute("intentos");
-        int intento = Integer.parseInt(request.getParameter("numero"));
+        int numIntento = Integer.parseInt(request.getParameter("numero"));
 
         intentos++;
         session.setAttribute("intentos", intentos);
 
-        if (intento == numeroSecreto) {
-            // comentado porque el método no existe aún
-            // guardarEstadistica(session, intentos);
-
+        if (numIntento == numeroSecreto) {
             session.setAttribute("intentosFinales", intentos);
             session.removeAttribute("numeroSecreto");
             session.removeAttribute("intentos");
 
             response.sendRedirect(UrlConstants.URL_FINISH);
         } else {
-            String mensaje = intento < numeroSecreto ? "Demasiado bajo" : "Demasiado alto";
+            String mensaje = numIntento < numeroSecreto ? "Demasiado bajo" : "Demasiado alto";
             session.setAttribute("mensaje", mensaje);
             response.sendRedirect(UrlConstants.URL_JUEGO);
         }

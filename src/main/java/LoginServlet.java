@@ -6,14 +6,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @WebServlet(UrlConstants.URL_LOGIN)
 public class LoginServlet extends HttpServlet  {
+    private final Map<String, Estadistica> estadisticasUsuarios = new HashMap<>();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    throws ServletException, IOException {
 
         String action = request.getParameter("action");
 
@@ -48,4 +53,25 @@ public class LoginServlet extends HttpServlet  {
             response.sendRedirect(UrlConstants.PAGE_LOGIN_ERROR);
         }
     }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String action = request.getParameter("action");
+
+        if ("estadistica".equals(action)) {
+            HttpSession session = request.getSession(false);
+            if (session == null || session.getAttribute("usuario") == null) {
+                response.sendRedirect(UrlConstants.PAGE_LOGIN_HTML);
+                return;
+            }
+
+            String usuario = session.getAttribute("usuario").toString();
+            Estadistica estadistica = estadisticasUsuarios.get(usuario);
+
+            request.setAttribute("estadistica", estadistica);
+        }
+    }
+
 }
