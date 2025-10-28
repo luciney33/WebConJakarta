@@ -32,28 +32,18 @@ public class FinishServlet extends HttpServlet {
         }
 
         String usuario = (String) session.getAttribute("usuario");
-        int intentos = (int) session.getAttribute("intentosFinales");
-        long inicioPartida = (long) session.getAttribute("inicioPartida");
-        long tiempoJuego = System.currentTimeMillis() - inicioPartida;
+        Integer intentos = (Integer) session.getAttribute("intentosFinales");
 
-        // Obtener o crear estadística
-        LoginServlet loginServlet = (LoginServlet) getServletContext().getAttribute("loginServlet");
-        Estadistica estadistica = loginServlet.obtenerEstadistica(usuario);
-
-        if (estadistica == null) {
-            estadistica = new Estadistica();
-            loginServlet.crearEstadistica(usuario, estadistica);
+        if (intentos == null) {
+            response.sendRedirect(UrlConstants.URL_JUEGO);
+            return;
         }
 
-        // Guardar partida
         int puntuacion = 100 - (intentos * 5);
-        estadistica.agregarPartida(new Partida(puntuacion, intentos, tiempoJuego));
 
-        // Limpiar sesión
         session.removeAttribute("inicioPartida");
         session.removeAttribute("intentosFinales");
 
-        // Mostrar pantalla de fin
         TemplateEngine engine = (TemplateEngine) getServletContext().getAttribute("templateEngine");
         JakartaServletWebApplication application = JakartaServletWebApplication.buildApplication(getServletContext());
         IWebExchange exchange = application.buildExchange(request, response);

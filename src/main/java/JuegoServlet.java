@@ -65,15 +65,28 @@ public class JuegoServlet extends HttpServlet {
         session.setAttribute("intentos", intentos);
 
         if (numIntento == numeroSecreto) {
-            session.setAttribute("intentosFinales", intentos);
+            crearPartida(session, intentos);
             session.removeAttribute("numeroSecreto");
             session.removeAttribute("intentos");
-
             response.sendRedirect(UrlConstants.URL_FINISH);
         } else {
             String mensaje = numIntento < numeroSecreto ? "Demasiado bajo" : "Demasiado alto";
             session.setAttribute("mensaje", mensaje);
             response.sendRedirect(UrlConstants.URL_JUEGO);
         }
+    }
+
+    private void crearPartida(HttpSession session, int intentos) {
+        String usuario = (String) session.getAttribute("usuario");
+        long inicioPartida = (long) session.getAttribute("inicioPartida");
+        long tiempoJuego = System.currentTimeMillis() - inicioPartida;
+
+        Estadistica estadistica = Estadistica.obtenerOCrearEstadistica(usuario);
+
+        int puntuacion = 100 - (intentos * 5);
+        Partida partida = new Partida(puntuacion, intentos, tiempoJuego);
+        estadistica.agregarPartida(partida);
+
+        session.setAttribute("intentosFinales", intentos);
     }
 }
